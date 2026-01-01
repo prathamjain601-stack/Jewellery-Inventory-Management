@@ -1,0 +1,26 @@
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Build output
+build
+dist
+coverage
+
+# Env
+.env
+.env.*
+
+# Editors/OS
+.vscode
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Others
+.vercel
+.netlify
