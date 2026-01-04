@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import CallOwnerButton from './CallOwnerButton';
 
 function Navbar({ onLanguageChange }) {
   const { t, i18n } = useTranslation();
@@ -8,19 +9,14 @@ function Navbar({ onLanguageChange }) {
   const isActive = (path) => location.pathname.startsWith(path);
 
   return (
-    <nav className="bg-white border-b border-cream-dark shadow-sm sticky top-0 z-50">
+    <nav className="navbar-root bg-white border-b border-cream-dark shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <Link to="/" className="text-5xl md:text-6xl font-serif font-light text-brown-dark hover:text-gold-dark transition-colors tracking-wide">
+        <div className="navbar-header flex justify-between items-center mb-6">
+          <Link to="/" className="navbar-title text-5xl md:text-6xl font-serif font-light text-brown-dark hover:text-gold-dark transition-colors tracking-wide">
             {t('shopName')}
           </Link>
-          <div className="flex gap-3 items-center">
-            <a
-              href="tel:+919876543210"
-              className="px-5 py-2.5 bg-gold text-white hover:bg-gold-dark rounded transition font-sans font-medium text-base shadow-sm hover:shadow-md"
-            >
-              {t('callOwner')}
-            </a>
+          <div className="navbar-actions flex gap-3 items-center">
+            <CallOwnerButton variant="primary" size="md" />
             <button
               onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'hi' : 'en')}
               className="px-5 py-2.5 border border-gold text-gold hover:bg-gold hover:text-white rounded transition font-light text-base"

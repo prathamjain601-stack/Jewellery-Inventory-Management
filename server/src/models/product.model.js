@@ -48,7 +48,25 @@ const productSchema = new mongoose.Schema(
       }
     },
     goldRateUpdatedOn: { type: Date, required: true, default: Date.now },
-    imageURL: { type: String, required: true, trim: true },
+    imageURLs: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function (arr) {
+          const hasArray = Array.isArray(arr) && arr.length > 0;
+          const hasLegacy = !!this.imageURL;
+          return hasArray || hasLegacy;
+        },
+        message: 'At least one image is required'
+      }
+    },
+    imageURL: {
+      type: String,
+      trim: true,
+      required: function () {
+        return !this.imageURLs || this.imageURLs.length === 0;
+      }
+    },
     category: { type: String, required: true, enum: categoryEnum },
     inventoryType: { type: String, required: true, enum: inventoryEnum },
     contactPhone: { type: String, trim: true },

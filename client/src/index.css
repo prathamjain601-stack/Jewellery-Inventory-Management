@@ -1,3 +1,135 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Product detail info layout */
+.product-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .product-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.info-card {
+  background: #ffffff;
+  border: 1px solid #e8e3d6; /* cream-dark */
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.date-highlight {
+  background: #faf3df; /* soft gold tint */
+  border: 1px solid #c9a961; /* gold */
+}
+
+.label-text {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #8b7355; /* brown-light */
+}
+
+.value-text {
+  font-family: 'Playfair Display', 'Times New Roman', serif;
+  font-size: 1.15rem;
+  color: #3e2723; /* brown-dark */
+}
+
+.value-emphasis {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #c9a961; /* gold */
+}
+
+.contact-button {
+  background: #c9a961;
+  color: #ffffff;
+  border: none;
+  padding: 0.85rem 1.5rem;
+  border-radius: 0.65rem;
+  font-weight: 600;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  box-shadow: 0 10px 30px rgba(201, 169, 97, 0.35);
+}
+
+.contact-button:hover {
+  background: #a68a52;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 36px rgba(201, 169, 97, 0.45);
+}
+
+/* Navbar responsive fixes */
+@media (max-width: 768px) {
+  .navbar-root {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .navbar-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .navbar-title {
+    text-align: center;
+  }
+
+  .navbar-actions {
+    margin-top: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+/* Faded Grid Background Pattern */
+.grid-background {
+  background-color: #F5F1E8; /* cream-default */
+  background-image:
+    linear-gradient(
+      0deg,
+      rgba(201, 169, 97, 0.08) 1px,
+      transparent 1px,
+      transparent 4rem,
+      rgba(201, 169, 97, 0.08) 4rem
+    ),
+    linear-gradient(
+      90deg,
+      rgba(201, 169, 97, 0.08) 1px,
+      transparent 1px,
+      transparent 4rem,
+      rgba(201, 169, 97, 0.08) 4rem
+    );
+  background-size: 4rem 4rem;
+  background-position: 0 0, 0 0;
+}
+
+/* Alternative: More subtle grid */
+.grid-background-subtle {
+  background-color: #F5F1E8; /* cream-default */
+  background-image:
+    linear-gradient(
+      rgba(92, 64, 51, 0.04) 1px,
+      transparent 1px,
+      transparent 3.5rem,
+      rgba(92, 64, 51, 0.04) 3.5rem
+    ),
+    linear-gradient(
+      90deg,
+      rgba(92, 64, 51, 0.04) 1px,
+      transparent 1px,
+      transparent 3.5rem,
+      rgba(92, 64, 51, 0.04) 3.5rem
+    );
+  background-size: 3.5rem 3.5rem;
+  background-position: 0 0, 0 0;
+}

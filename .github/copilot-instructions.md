@@ -4,42 +4,32 @@
 **Bilingual MERN e-commerce app** for jewelry inventory (Juna Sona/Old Gold, Naya Sona/New Gold, Cancelled Orders).
 
 - **Frontend**: React 18 + Vite + React Router + Tailwind CSS, proxied to `/api` → `http://localhost:5000`
-- **Backend**: Express + Mongoose + MongoDB, follows MVC: `routes → controllers → models`
-- **Key Design**: Product has `inventoryType` (enum: "Juna Sona", "Naya Sona", "Order Cancelled Product") and `category` (bangles, earrings, etc.)
+- **Backend**: Express + Mongoose + MongoDB, follows strict MVC: `routes → controllers → models`
+- **Key Design**: Product has `inventoryType` (enum: "Juna Sona", "Naya Sona", "Order Cancelled Product") and `category` (9 fixed categories: bangles, earrings, necklace, ring, chain, pendant, bracelet, mixed product, other)
 
-## Data Model
-Product schema (`server/src/models/product.model.js`):
-- **Gold Rate Strategy**: `goldRateType` ∈ {`single`, `range`} determines if `goldRateValue` (single) or `goldRateMin`/`goldRateMax` (range) are required
-- **Timestamps**: `createdAt`, `updatedAt` auto-managed
-- **Defaults**: `isActive: true`, `goldRateUpdatedOn: Date.now`
-- **Validations**: Category & inventoryType are strict enums; image URL required
+## Data Model Essentials
+**Product Schema** (`server/src/models/product.model.js`):
+- **Gold Rate Logic**: `goldRateType` ∈ {`single`, `range`} with conditional required fields—use `single` for fixed prices, `range` for min/max pricing
+- **Validation**: All category & inventoryType values are strict MongoDB enums; imageURL is required
+- **Timestamps**: `createdAt`, `updatedAt` auto-managed; `goldRateUpdatedOn` tracks rate change date
+- **Defaults**: `isActive: true`, `goldRateType: single`
 
-## Naming & File Organization
-- **Files/Folders**: kebab-case (e.g., `product-routes.js`, `category-filter.jsx`)
-- **React Components**: PascalCase exports (e.g., `ProductCard`)
+## Naming Conventions
+- **Files/Folders**: kebab-case (`product.controller.js`, `CategoryFilter.jsx`)
+- **React Components**: PascalCase exports (`ProductCard`, `InventoryTypePage`)
 - **Variables/Functions**: camelCase
-- **Mongo Models**: PascalCase (e.g., `Product`)
-- **Feature Structure**: Prefer feature-specific folders under `components/` and `pages/` to minimize conflicts
+- **Mongo Models**: PascalCase (`Product`)
 
-## Development Workflow
-
-### Setup
+## Development Setup
 ```bash
-cd client && npm install
-cd ../server && npm install
+# Terminal 1: Frontend (port 5173, hot reload)
+cd client && npm install && npm run dev
+
+# Terminal 2: Backend (port 5000, requires .env)
+cd server && npm install && npm run dev
 ```
 
-### Running
-```bash
-# Terminal 1: Frontend (Vite dev server, port 5173)
-cd client && npm run dev
-
-# Terminal 2: Backend (Express, port 5000, requires .env)
-cd server && npm run dev
-```
-
-### Environment Variables
-`server/.env` **must** contain:
+**server/.env required**:
 ```
 PORT=5000
 MONGO_URI=mongodb+srv://<user>:<pass>@<cluster>/<dbname>
@@ -47,45 +37,42 @@ NODE_ENV=development
 CLIENT_ORIGIN=http://localhost:5173
 ```
 
-## Key API Routes
-- **List**: `GET /api/products?category=<cat>&inventoryType=<type>&q=<search>` — filters via `$regex` (case-insensitive)
-- **Get**: `GET /api/products/:id`
-- **Create**: `POST /api/products` — requires valid schema; returns 201
-- **Update**: `PUT /api/products/:id` — validates on update
-- **Delete**: `DELETE /api/products/:id` — returns 204 no-content
+## API Contract
+All routes under `/api/products`. Controllers use `next(err)` for error handling.
+- **GET /** — list products; filters: `?category=bangles&inventoryType=Juna Sona&q=search` (case-insensitive `$regex`)
+- **GET /:id** — fetch single product
+- **POST /** — create; validates schema; returns 201 + product
+- **PATCH /:id** — update with `runValidators: true`; returns 200 + updated product
+- **DELETE /:id** — remove; returns 204 no-content
 
 ## Frontend Patterns
-- **i18n**: React-i18next manages EN/HI translations in `src/i18n.js`; use `useTranslation()` hook and access nested keys like `t('categories.earrings')`
-- **Routing**: App.jsx maps routes to inventory types + optional `:category` parameter
-- **Component Communication**: Likely context-based (check `context/` folder); Axios calls go through Vite proxy
-- **Styling**: Tailwind + custom CSS in `index.css`; custom color utilities (`.cream-dark`, `.brown`, `.gold-dark`)
+- **i18n**: React-i18next; translations in `src/i18n.js` (EN/HI). Access via `useTranslation()` → `t('key')` or `t('categories.bangles')`
+- **Routing**: `App.jsx` defines inventory type routes + optional `:category` param; no query-string filtering
+- **HTTP**: Axios calls proxied via Vite to `/api`; errors handled per-component (no global boundary yet)
+- **Styling**: Tailwind 3 + extended theme (`tailwind.config.js`): custom colors (cream, gold, brown variants)
 
-## Error Handling & Middleware
-**Backend** (`server/src/middleware/error.middleware.js`):
-- Centralizes error handling; all controller errors pass via `next(err)`
-- 404 handler returns standard JSON; error handler logs & responds
+## Error Handling
+- **Backend**: `notFound()` + `errorHandler()` in `error.middleware.js`; logs errors, returns JSON with message
+- **Frontend**: Catch errors in component handlers; no global boundary—consider adding if expanding
 
-**Frontend**:
-- Axios calls handle errors in components; no global error boundary yet—add if needed
-
-## Testing & Build
-- **Client Build**: `npm run build` → minified dist/
-- **Client Preview**: `npm run preview`
-- **No test suite yet**—Jest + Vitest can be added; follow MVC pattern for unit tests
-
-## Known Conventions & Quirks
-1. **Product image**: Field name varies (`imageURL` in schema, but components check `imageURLs` array first with fallback to `imageURL`)
-2. **Gold rates**: Always validate `goldRateType` before accessing rate fields—conditional required fields in schema enforce at DB level
-3. **isActive flag**: Used internally; not exposed in API yet—safe to add filtering
-4. **CORS**: Strictly bounded to `CLIENT_ORIGIN` env var; don't relax without reason
+## Key Quirks & Patterns
+1. **Gold rates**: Validate `goldRateType` before reading `goldRateValue` or `goldRateMin/Max`—schema enforces via conditional required
+2. **Axios calls**: Check `vite.config.js` proxy; route via `/api` prefix
+3. **Image handling**: ProductForm.jsx expects `imageURL` (string, single); supports file upload or URL input
+4. **CORS**: Bound to `CLIENT_ORIGIN` env; don't relax scope without reason
+5. **HTTP verb**: Uses PATCH (not PUT) for updates—partial updates
 
 ## Common Tasks
-- **Add New Inventory Type**: Update `inventoryEnum` in `product.model.js` + add i18n key + new Route in `App.jsx`
-- **Add Product Field**: Schema update → controller if filtering → component display if user-facing
-- **Modify Styling**: Check `tailwind.config.js` for custom theme; update `index.css` for global overrides
-- **Debug API Calls**: Check Vite proxy config in `vite.config.js`; use Network tab in DevTools
+- **Add Inventory Type**: Update `inventoryEnum` in model → add i18n key (`junaSona`, `nayaSona`, `orderCancelledProduct`) → add routes in `App.jsx`
+- **Add Product Field**: Extend schema → update controller if filtering required → update form & display components if user-facing
+- **Extend Styling**: Modify `tailwind.config.js` theme, not component CSS
+- **Debug APIs**: Use DevTools Network tab; Vite dev server logs requests
 
-## Resources
-- README.md for project vision & setup
-- `server/src/index.js` for middleware stack & health check (`/api/health`)
-- `client/src/components/` for Tailwind + i18n patterns
+## File Reference
+- [server/src/index.js](server/src/index.js) — middleware stack, MongoDB connect, health check `/api/health`
+- [server/src/models/product.model.js](server/src/models/product.model.js) — schema enums, validators
+- [server/src/controllers/product.controller.js](server/src/controllers/product.controller.js) — CRUD logic, filtering
+- [server/src/routes/product.routes.js](server/src/routes/product.routes.js) — endpoint map
+- [client/src/i18n.js](client/src/i18n.js) — all translations (EN/HI)
+- [client/src/App.jsx](client/src/App.jsx) — route structure
+- [client/tailwind.config.js](client/tailwind.config.js) — color theme

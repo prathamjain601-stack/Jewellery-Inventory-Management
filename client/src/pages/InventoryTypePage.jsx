@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import ProductCard from '../components/ProductCard';
 import ProductDetailModal from '../components/ProductDetailModal';
+import CallOwnerButton from '../components/CallOwnerButton';
 
 function InventoryTypePage({ inventoryType, title }) {
   const { t } = useTranslation();
@@ -72,7 +73,7 @@ function InventoryTypePage({ inventoryType, title }) {
   };
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen grid-background">
       <div className="container mx-auto px-4 py-10">
         <h1 className="text-4xl font-serif font-light text-brown-dark mb-2">
           {title}
@@ -161,12 +162,7 @@ function InventoryTypePage({ inventoryType, title }) {
 
         {/* Call to Action */}
         <div className="mt-12 text-center">
-          <a
-            href="tel:+919876543210"
-            className="inline-block px-8 py-3 bg-gold text-white rounded font-light hover:bg-gold-dark transition tracking-wide"
-          >
-            {t('callOwner')}
-          </a>
+          <CallOwnerButton variant="primary" size="md" />
         </div>
       </div>
 

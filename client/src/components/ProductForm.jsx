@@ -12,7 +12,8 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
     goldRateMin: '',
     goldRateMax: '',
     goldRateUpdatedOn: new Date().toISOString().slice(0, 10),
-    imageURL: '',
+    imageURLs: [],
+    imageURLInput: '',
     imageFile: null,
     category: 'bangles',
     inventoryType: 'Juna Sona',
@@ -25,6 +26,12 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
 
   useEffect(() => {
     if (isEditing && initialData) {
+      const existingImages = initialData.imageURLs?.length
+        ? initialData.imageURLs
+        : initialData.imageURL
+        ? [initialData.imageURL]
+        : [];
+
       setFormData({
         name: initialData.name || '',
         description: initialData.description || '',
@@ -37,7 +44,8 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
         goldRateUpdatedOn: initialData.goldRateUpdatedOn
           ? new Date(initialData.goldRateUpdatedOn).toISOString().slice(0, 10)
           : new Date().toISOString().slice(0, 10),
-        imageURL: initialData.imageURL || '',
+        imageURLs: existingImages,
+        imageURLInput: '',
         imageFile: null,
         category: initialData.category || 'bangles',
         inventoryType: initialData.inventoryType || 'Juna Sona',
@@ -68,25 +76,49 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
     }));
   };
 
+  const handleAddImageURL = () => {
+    const url = formData.imageURLInput?.trim();
+    if (!url) return;
+    setFormData((prev) => ({
+      ...prev,
+      imageURLs: [...prev.imageURLs, url],
+      imageURLInput: ''
+    }));
+  };
+
+  const handleRemoveImage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageURLs: prev.imageURLs.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
     setUploadingImage(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        setFormData((prev) => ({
-          ...prev,
-          imageURL: base64String,
-          imageFile: file
-        }));
-        setUploadingImage(false);
-      };
-      reader.readAsDataURL(file);
+      const fileReaders = files.map(
+        (file) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          })
+      );
+
+      const encodedImages = await Promise.all(fileReaders);
+
+      setFormData((prev) => ({
+        ...prev,
+        imageURLs: [...prev.imageURLs, ...encodedImages],
+        imageFile: files[0] || null
+      }));
     } catch (err) {
       setError('Failed to process image');
+    } finally {
       setUploadingImage(false);
     }
   };
@@ -98,8 +130,9 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
     setLoading(true);
 
     try {
-      if (!formData.imageURL) {
-        throw new Error('Image is required');
+      const cleanImages = (formData.imageURLs || []).filter(Boolean);
+      if (!cleanImages.length) {
+        throw new Error('At least one image is required');
       }
 
       const goldRatePayload = {
@@ -127,7 +160,8 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
         ...goldRatePayload,
         name: formData.name || undefined,
         description: formData.description || undefined,
-        imageURL: formData.imageURL,
+        imageURL: cleanImages[0],
+        imageURLs: cleanImages,
         category: formData.category,
         inventoryType: formData.inventoryType
       };
@@ -168,7 +202,8 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
           goldRateMin: '',
           goldRateMax: '',
           goldRateUpdatedOn: new Date().toISOString().slice(0, 10),
-          imageURL: '',
+          imageURLs: [],
+          imageURLInput: '',
           imageFile: null,
           category: 'bangles',
           inventoryType: 'Juna Sona',
@@ -409,22 +444,23 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
 
       <div className="mb-4">
         <label className="block text-sm font-semibold mb-2">
-          Image *
+          Images * (add multiple for better experience)
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
           <div>
             <label className="block text-xs font-light text-brown mb-2">
-              Upload Image
+              Upload Images (multiple allowed)
             </label>
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleFileChange}
               disabled={uploadingImage}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gold text-sm"
             />
             {uploadingImage && (
-              <p className="text-xs text-gold mt-1">Processing image...</p>
+              <p className="text-xs text-gold mt-1">Processing images...</p>
             )}
             {formData.imageFile && (
               <p className="text-xs text-green-600 mt-1">
@@ -435,27 +471,47 @@ function ProductForm({ t, onProductAdded, initialData, isEditing }) {
 
           <div>
             <label className="block text-xs font-light text-brown mb-2">
-              OR Paste URL
+              OR Paste image URL and add
             </label>
-            <input
-              type="url"
-              name="imageURL"
-              value={formData.imageURL.startsWith('data:') ? '' : formData.imageURL}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gold text-sm"
-              disabled={formData.imageFile !== null}
-            />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                name="imageURLInput"
+                value={formData.imageURLInput}
+                onChange={handleChange}
+                placeholder="https://example.com/image.jpg"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gold text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleAddImageURL}
+                className="px-4 py-2 bg-gold text-white rounded text-sm hover:bg-gold-dark transition"
+              >
+                Add
+              </button>
+            </div>
           </div>
         </div>
 
-        {formData.imageURL && (
-          <div className="mt-3">
-            <img
-              src={formData.imageURL}
-              alt="Preview"
-              className="max-h-32 rounded border border-cream-dark"
-            />
+        {formData.imageURLs.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+            {formData.imageURLs.map((img, idx) => (
+              <div key={`${img}-${idx}`} className="relative group">
+                <img
+                  src={img}
+                  alt={`Preview ${idx + 1}`}
+                  className="w-full h-24 object-cover rounded border border-cream-dark"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage(idx)}
+                  className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs rounded-full px-2 py-1 opacity-0 group-hover:opacity-100 transition"
+                  aria-label="Remove image"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>

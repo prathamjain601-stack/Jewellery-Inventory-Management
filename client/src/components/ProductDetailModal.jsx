@@ -1,8 +1,14 @@
 import { useState } from 'react';
 
 function ProductDetailModal({ product, onClose, t }) {
-  const images = product.imageURLs || [product.imageURL];
+  const mergedImages = product.imageURLs?.length
+    ? product.imageURLs
+    : product.imageURL
+    ? [product.imageURL]
+    : [];
+  const images = mergedImages.length ? mergedImages : [''];
   const [activeIndex, setActiveIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
 
   const handlePrevImage = () => {
     setActiveIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -10,6 +16,24 @@ function ProductDetailModal({ product, onClose, t }) {
 
   const handleNextImage = () => {
     setActiveIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    const threshold = 40;
+    if (Math.abs(deltaX) > threshold) {
+      if (deltaX > 0) {
+        handlePrevImage();
+      } else {
+        handleNextImage();
+      }
+    }
+    setTouchStartX(null);
   };
 
   const handleBackdropClick = (e) => {
@@ -44,7 +68,11 @@ function ProductDetailModal({ product, onClose, t }) {
         </button>
 
         {/* Image Section */}
-        <div className="relative w-full h-[75vh] max-h-[700px] bg-cream-100 overflow-hidden flex items-center justify-center">
+        <div
+          className="relative w-full h-[75vh] max-h-[700px] bg-cream-100 overflow-hidden flex items-center justify-center"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <img
             src={images[activeIndex]}
             alt={product.name}
@@ -101,51 +129,48 @@ function ProductDetailModal({ product, onClose, t }) {
 
         {/* Product Details Section */}
         <div className="p-6 md:p-8">
-          <h2 className="text-3xl font-serif font-light text-brown-dark mb-2">
+          <h2 className="text-3xl md:text-4xl font-serif font-light text-brown-dark mb-2">
             {product.name}
           </h2>
           
-          <p className="text-sm text-gold uppercase tracking-wide mb-4">
+          <p className="label-text mb-4">
             {t(`categories.${product.category}`)}
           </p>
 
           {product.description && (
-            <div className="mb-6">
-              <h3 className="text-lg font-serif font-light text-brown-dark mb-2">
+            <div className="mb-8">
+              <h3 className="label-text mb-2 normal-case text-brown-dark text-sm">
                 {t('description')}
               </h3>
-              <p className="text-brown-light leading-relaxed">
+              <p className="value-text leading-relaxed text-lg md:text-xl">
                 {product.description}
               </p>
             </div>
           )}
 
-          {/* Product Information Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="product-info-grid mb-8">
             {typeof product.amount === 'number' && (
-              <div>
-                <p className="text-sm text-brown-light mb-1">{t('amount')}</p>
-                <p className="text-2xl font-light text-gold-dark">
+              <div className="info-card">
+                <p className="label-text mb-2">{t('amount')}</p>
+                <p className="value-emphasis">
                   ₹{product.amount.toLocaleString()}
                 </p>
               </div>
             )}
 
             {product.productWeight && (
-              <div>
-                <p className="text-sm text-brown-light mb-1">Weight</p>
-                <p className="text-xl font-light text-brown-dark">
-                  {product.productWeight}g
-                </p>
+              <div className="info-card">
+                <p className="label-text mb-2">Weight</p>
+                <p className="value-text text-xl">{product.productWeight}g</p>
               </div>
             )}
 
             {product.goldRateType && (
-              <div>
-                <p className="text-sm text-brown-light mb-1">
-                  {t('goldRate')} (10g)
+              <div className="info-card">
+                <p className="label-text mb-2 flex items-center justify-between">
+                  <span>{t('goldRate')} (10g)</span>
                 </p>
-                <p className="text-xl font-light text-brown-dark">
+                <p className="value-emphasis">
                   {product.goldRateType === 'single'
                     ? `₹${product.goldRateValue?.toLocaleString?.() || product.goldRateValue}`
                     : `₹${product.goldRateMin?.toLocaleString?.() || product.goldRateMin} - ₹${product.goldRateMax?.toLocaleString?.() || product.goldRateMax}`}
@@ -154,11 +179,9 @@ function ProductDetailModal({ product, onClose, t }) {
             )}
 
             {product.goldRateUpdatedOn && (
-              <div>
-                <p className="text-sm text-brown-light mb-1">
-                  {t('goldRateUpdatedOn')}
-                </p>
-                <p className="text-base font-light text-brown-dark">
+              <div className="info-card date-highlight">
+                <p className="label-text mb-2">{t('goldRateUpdatedOn')}</p>
+                <p className="value-text font-semibold text-brown-dark">
                   {new Date(product.goldRateUpdatedOn).toLocaleDateString('en-GB', {
                     day: '2-digit',
                     month: '2-digit',
@@ -169,18 +192,17 @@ function ProductDetailModal({ product, onClose, t }) {
             )}
           </div>
 
-          {/* Contact Button */}
           {product.contactPhone && (
             <a
               href={`tel:${product.contactPhone}`}
-              className="block w-full md:w-auto md:inline-block text-center px-8 py-3 bg-gold text-white rounded font-light hover:bg-gold-dark transition tracking-wide"
+              className="contact-button inline-flex items-center justify-center"
             >
               {t('contactDealer')}
             </a>
           )}
 
           {(!product.amount || product.amount === null || product.amount === undefined) && !product.contactPhone && (
-            <button className="block w-full md:w-auto md:inline-block text-center px-8 py-3 border border-gold text-gold hover:bg-gold hover:text-white rounded transition font-light tracking-wide">
+            <button className="contact-button inline-flex items-center justify-center">
               {t('contactDealer')}
             </button>
           )}

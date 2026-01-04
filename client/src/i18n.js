@@ -11,6 +11,7 @@ const resources = {
       nayaSona: 'Naya Sona',
       orderCancelledProduct: 'Order Cancelled Product',
       contactDealer: 'Contact Dealer',
+      ownerPhone: '+91 9876543210',
       categories: {
         bangles: 'Bangles',
         earrings: 'Earrings',
@@ -37,6 +38,7 @@ const resources = {
       nayaSona: 'नया सोना',
       orderCancelledProduct: 'रद्द किया गया ऑर्डर उत्पाद',
       contactDealer: 'डीलर से संपर्क करें',
+      ownerPhone: '+91 9876543210',
       categories: {
         bangles: 'कंगन',
         earrings: 'कान की बालियाँ',

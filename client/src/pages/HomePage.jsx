@@ -1,21 +1,17 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import CallOwnerButton from '../components/CallOwnerButton';
 
 function HomePage() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen grid-background">
       <div className="container mx-auto px-4 py-20">
         {/* Hero Section */}
         <div className="text-center mb-24 py-12">
           <p className="text-brown-light text-xl font-sans italic mb-10">{t('address')}</p>
-          <a
-            href="tel:+919876543210"
-            className="inline-block px-10 py-4 bg-gold text-white rounded-lg font-sans font-medium hover:bg-gold-dark transition-all text-lg tracking-wide shadow-lg hover:shadow-xl hover:scale-105"
-          >
-            {t('callOwner')}
-          </a>
+          <CallOwnerButton variant="primary" size="lg" />
         </div>
 
         {/* Three Main Categories */}
